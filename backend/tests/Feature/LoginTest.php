@@ -27,7 +27,7 @@ class LoginTest extends TestCase
         //$this->withoutExceptionHandling();
         $credentials = ['email' => 'example@example.com', 'password' => 'password'];
 
-        $response = $this->post("{$this->apiBase}/login", $credentials);
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
 
         $response->assertStatus(200);
         $response->assertJsonStructure(['data' => ['token']]);
@@ -38,10 +38,10 @@ class LoginTest extends TestCase
      */
     public function test_that_a_non_existing_user_cannot_login(): void
     {
-        $credentials = ['email' => 'example@nonexisting.com', 'password' => 'asdasd'];
+        $credentials = ['email' => 'example@nonexisting.com', 'password' => 'password'];
 
-        $response = $this->post('/api/v1/login', $credentials);
-
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
+        //$response->dd();
         $response->assertStatus(401);
         $response->assertJsonFragment(['status' => 401, 'message' => 'Unauthorized']);
     }
@@ -51,12 +51,41 @@ class LoginTest extends TestCase
      */
     public function test_that_email_must_be_required(): void
     {
-        $credentials = ['password' => 'asdasd'];
+        $credentials = ['password' => 'password'];
 
-        $response = $this->post('/api/v1/login', $credentials);
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
+        $response->assertJsonFragment(['errors' => ['email' => ['The email field is required.']]]);
+    }
 
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['data' => ['token']]);
+    /**
+     * Testing that is valid email
+     */
+    public function test_that_is_valid_email(): void
+    {
+        $credentials = ['email' => 'asdasdasdasd', 'password' => 'password'];
+
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
+        $response->assertJsonFragment(['errors' => ['email' => ['The email field must be a valid email address.']]]);
+    }
+
+    /**
+     * Testing that email must be a string
+     */
+    public function test_that_email_must_be_a_string(): void
+    {
+        $credentials = ['email' => 1, 'password' => 'password'];
+
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
+        $response->assertJsonFragment(['errors' => ['email' => [
+            'The email field must be a string.',
+            'The email field must be a valid email address.'
+        ]]]);
     }
 
     /**
@@ -66,9 +95,23 @@ class LoginTest extends TestCase
     {
         $credentials = ['email' => 'example@nonexisting.com'];
 
-        $response = $this->post('/api/v1/login', $credentials);
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
+        //$response->dd();
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
+        $response->assertJsonFragment(['errors' => ['password' => ['The password field is required.']]]);
+    }
 
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['data' => ['token']]);
+    /**
+     * Testing that password must have at least 8 characters
+     */
+    public function test_that_password_must_have_at_least_8_characters(): void
+    {
+        $credentials = ['email' => 'example@example.com', 'password' => 'asd'];
+
+        $response = $this->postJson("{$this->apiBase}/login", $credentials);
+        $response->assertStatus(422);
+        $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
+        $response->assertJsonFragment(['errors' => ['password' => ['The password field must be at least 8 characters.']]]);
     }
 }

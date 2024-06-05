@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,6 +18,22 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (ValidationException $throwable) {
-            return jsonResponse(message: $throwable->getMessage(), status: 422, errors: $throwable->errors());
+            return jsonResponse([
+                'data' => [],
+                'message' => $throwable->getMessage(),
+                'status' => config('http_constants.unprocessable_entity'),
+                'errors' => $throwable->errors()
+            ]);
         });
+        
+        $exceptions->render(function (HttpException $throwable) {
+            return jsonResponse([
+                'data' => [],
+                'message' => $throwable->getMessage(),
+                'status' => $throwable->getStatusCode(),
+                'errors' => [$throwable->getMessage()]
+            ]);
+        });
+        
+
     })->create();

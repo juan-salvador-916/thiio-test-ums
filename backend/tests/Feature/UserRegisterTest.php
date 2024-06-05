@@ -12,6 +12,11 @@ class UserRegisterTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(UserSeeder::class);
+    }
 
 
     /**
@@ -24,29 +29,41 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'password123',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        //$response->dd();
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['message', 'data', 'status', 'errors']);
+
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.created'));
+        $response->assertJsonStructure([
+            'message', 
+            'data' => [
+                'user' => ['id','email','name','last_name','role']
+            ], 
+            'status', 
+            'errors'
+        ]);
         $response->assertJsonFragment([
-            'message' => 'OK',
+            'message' => 'User Registered',
             'data' => [
                 'user' => [
-                    'id' => 1,
+                    'id' => 2,
                     'email' => 'juan@gmail.com',
                     'name' => 'Juan Salvador',
-                    'last_name' => 'Hernandez'
+                    'last_name' => 'Hernandez',
+                    'role' => 'NORMAL'
                 ]
-            ], 'status' => 200
+            ], 
+            'status' => config('http_constants.created'),
+            'errors' => []
         ]);
 
-        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseCount('users', 2);
         $this->assertDatabaseHas('users', [
             'email' => 'juan@gmail.com',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ]);
     }
 
@@ -59,15 +76,22 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'password123',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $this->postJson("{$this->apiBase}/users", $data);
-        $response = $this->postJson("{$this->apiBase}/login", [
+        $registerResponse = $this->postJson("{$this->apiBase}/register-user", $data);
+
+        $registerResponse->assertStatus(config('http_constants.created'));
+        
+        $dataLogin = [
             'email' => 'juan@gmail.com',
             'password' => 'password123',
-        ]);
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['data' => ['token']]);
+        ];
+
+        $responseLogin = $this->postJson("{$this->apiBase}/login", $dataLogin);
+        $responseLogin->assertStatus(config('http_constants.ok'));
+        $responseLogin->assertJsonStructure(['data' => ['token'], 'message', 'status', 'errors']);
+
     }
 
     /**
@@ -81,11 +105,12 @@ class UserRegisterTest extends TestCase
             'email' => '',
             'password' => 'password123',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
 
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        $response->assertStatus(422);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
         $response->assertJsonFragment(['errors' => ['email' => ['The email field is required.']]]);
     }
@@ -99,10 +124,11 @@ class UserRegisterTest extends TestCase
             'email' => 'juan123',
             'password' => 'password123',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        $response->assertStatus(422);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
         $response->assertJsonFragment(['errors' => ['email' => ['The email field must be a valid email address.']]]);
     }
@@ -114,17 +140,19 @@ class UserRegisterTest extends TestCase
     {
         //$this->withoutExceptionHandling();
         User::factory()->create([
-            'email' => 'juan@gmail.com'
+            'email' => 'juan@gmail.com',
+            'role' => 'NORMAL'
         ]);
 
         $data = [
             'email' => 'juan@gmail.com',
             'password' => 'password123',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        $response->assertStatus(422);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
         $response->assertJsonFragment(['errors' => ['email' => ['The email has already been taken.']]]);
     }
@@ -140,11 +168,12 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => '',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
         $response->assertJsonFragment(['errors' => ['password' => ['The password field is required.']]]);
     }
@@ -158,10 +187,11 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'asdasd',
             'name' => 'Juan Salvador',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        $response->assertStatus(422);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
         $response->assertJsonFragment(['errors' => ['password' => ['The password field must be at least 8 characters.']]]);
     }
@@ -176,11 +206,12 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'password',
             'name' => '',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['name']]);
         $response->assertJsonFragment(['errors' => ['name' => ['The name field is required.']]]);
     }
@@ -194,10 +225,11 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'password',
             'name' => 'J',
-            'last_name' => 'Hernandez'
+            'last_name' => 'Hernandez',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        $response->assertStatus(422);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['name']]);
         $response->assertJsonFragment(['errors' => ['name' => ['The name field must be at least 2 characters.']]]);
     }
@@ -213,11 +245,12 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'password',
             'name' => 'Juan Salvador',
-            'last_name' => ''
+            'last_name' => '',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['last_name']]);
         $response->assertJsonFragment(['errors' => ['last_name' => ['The last name field is required.']]]);
     }
@@ -231,11 +264,30 @@ class UserRegisterTest extends TestCase
             'email' => 'juan@gmail.com',
             'password' => 'password',
             'name' => 'Juan Salvador',
-            'last_name' => 'H'
+            'last_name' => 'H',
+            'role' => 'NORMAL'
         ];
-        $response = $this->postJson("{$this->apiBase}/users", $data);
-        $response->assertStatus(422);
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['last_name']]);
         $response->assertJsonFragment(['errors' => ['last_name' => ['The last name field must be at least 2 characters.']]]);
+    }
+
+    /**
+     * Testing that register role value must be normal
+     */
+    public function test_that_register_role_value_must_be_normal(): void
+    {
+        $data = [
+            'email' => 'juan@gmail.com',
+            'password' => 'password',
+            'name' => 'Juan Salvador',
+            'last_name' => 'Hernandez',
+            'role' => 'ADMIN'
+        ];
+        $response = $this->postJson("{$this->apiBase}/register-user", $data);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
+        $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['role']]);
+        $response->assertJsonFragment(['errors' => ['role' => ['The selected role is invalid.']]]);
     }
 }

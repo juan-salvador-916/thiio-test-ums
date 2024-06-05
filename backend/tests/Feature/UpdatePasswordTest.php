@@ -33,8 +33,22 @@ class UpdatePasswordTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/password", $data);
         //$response->dd();
-        $response->assertStatus(200);
+        $response->assertStatus(config('http_constants.ok'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors']);
+        $response->assertJsonFragment([
+            'message' => 'Profile Password Updated',
+            'data' => [
+                'user' => [
+                    'id' => 1,
+                    'email' => 'example@example.com',
+                    'name' => 'User',
+                    'last_name' => 'Test',
+                    'role' => 'ADMIN'
+                ]
+            ], 
+            'status' => config('http_constants.ok'),
+            'errors' => []
+        ]);
         $user = User::find(1);
         $this->assertTrue(Hash::check('newpassword', $user->password));
     }
@@ -51,7 +65,7 @@ class UpdatePasswordTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/password", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['old_password']]);
         $response->assertJsonFragment(['errors' => ['old_password' => ['The password does not match.']]]);
     }
@@ -69,7 +83,7 @@ class UpdatePasswordTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/password", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['old_password']]);
         $response->assertJsonFragment(['errors' => ['old_password' => ['The old password field is required.']]]);
     }
@@ -88,7 +102,7 @@ class UpdatePasswordTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/password", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
         $response->assertJsonFragment(['errors' => ['password' => ['The password field is required.']]]);
     }
@@ -106,7 +120,7 @@ class UpdatePasswordTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/password", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
         $response->assertJsonFragment(['errors' => ['password' => ['The password field confirmation does not match.']]]);
     }

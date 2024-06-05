@@ -31,23 +31,27 @@ class UpdateUserDataTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
         //$response->dd();
-        $response->assertStatus(200);
+        $response->assertStatus(config('http_constants.ok'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors']);
         $response->assertJsonFragment([
-            'message' => 'OK',
+            'message' => 'Profile Updated',
             'data' => [
                 'user' => [
                     'id' => 1,
                     'email' => 'example@example.com',
                     'name' => 'New Name',
-                    'last_name' => 'New LastName'
+                    'last_name' => 'New LastName',
+                    'role' => 'ADMIN'
                 ]
-            ], 'status' => 200
+            ], 
+            'status' => config('http_constants.ok'),
+            'errors' => []
         ]);
         $this->assertDatabaseMissing('users', [
             'email' => 'example@example.com',
             'name' => 'User',
-            'last_name' => 'Test'
+            'last_name' => 'Test',
+            'role' => 'ADMIN'
         ]);
     }
 
@@ -56,7 +60,7 @@ class UpdateUserDataTest extends TestCase
      */
     public function test_that_an_authenticated_user_cannot_modify_their_email(): void
     {
-        $this->withoutExceptionHandling();
+        //$this->withoutExceptionHandling();
         $data = [
             'email' => 'newemail@example.com',
             'name' => 'New Name',
@@ -64,23 +68,27 @@ class UpdateUserDataTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
         //$response->dd();
-        $response->assertStatus(200);
+        $response->assertStatus(config('http_constants.ok'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors']);
         $response->assertJsonFragment([
-            'message' => 'OK',
+            'message' => 'Profile Updated',
             'data' => [
                 'user' => [
                     'id' => 1,
                     'email' => 'example@example.com',
                     'name' => 'New Name',
-                    'last_name' => 'New LastName'
+                    'last_name' => 'New LastName',
+                    'role' => 'ADMIN'
                 ]
-            ], 'status' => 200
+            ], 
+            'status' => config('http_constants.ok'),
+            'errors' => []
         ]);
         $this->assertDatabaseHas('users', [
             'email' => 'example@example.com',
             'name' => 'New Name',
-            'last_name' => 'New LastName'
+            'last_name' => 'New LastName',
+            'role' => 'ADMIN'
         ]);
     }
 
@@ -97,8 +105,22 @@ class UpdateUserDataTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
         //$response->dd();
-        $response->assertStatus(200);
+        $response->assertStatus(config('http_constants.ok'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors']);
+        $response->assertJsonFragment([
+            'message' => 'Profile Updated',
+            'data' => [
+                'user' => [
+                    'id' => 1,
+                    'email' => 'example@example.com',
+                    'name' => 'New Name',
+                    'last_name' => 'New LastName',
+                    'role' => 'ADMIN'
+                ]
+            ], 
+            'status' => config('http_constants.ok'),
+            'errors' => []
+        ]);
         $user = User::find(1);
         $this->assertFalse(Hash::check('newPassword',$user->password));
     }
@@ -115,7 +137,7 @@ class UpdateUserDataTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['name']]);
         $response->assertJsonFragment(['errors' => ['name' => ['The name field is required.']]]);
     }
@@ -130,7 +152,7 @@ class UpdateUserDataTest extends TestCase
             'last_name' => 'Hernandez'
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['name']]);
         $response->assertJsonFragment(['errors' => ['name' => ['The name field must be at least 2 characters.']]]);
     }
@@ -148,7 +170,7 @@ class UpdateUserDataTest extends TestCase
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['last_name']]);
         $response->assertJsonFragment(['errors' => ['last_name' => ['The last name field is required.']]]);
     }
@@ -163,7 +185,7 @@ class UpdateUserDataTest extends TestCase
             'last_name' => 'H'
         ];
         $response = $this->apiAs(User::find(1), 'put', "{$this->apiBase}/profile", $data);
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['last_name']]);
         $response->assertJsonFragment(['errors' => ['last_name' => ['The last name field must be at least 2 characters.']]]);
     }

@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RegisterUserRequest extends FormRequest
+class AdminCreateUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return auth()->check() && auth()->user()->role === 'ADMIN';
     }
 
     /**
@@ -23,10 +23,10 @@ class RegisterUserRequest extends FormRequest
     {
         return [
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-            'name' => 'required|min:2',
-            'last_name' => 'required|min:2',
-            'role' => 'required|in:NORMAL'
+            'password' => 'required|min:8|string',
+            'name' => 'required|min:2|string',
+            'last_name' => 'required|min:2|string',
+            'role' => 'required|in:ADMIN,NORMAL',
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
@@ -29,8 +30,14 @@ class LoginTest extends TestCase
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
 
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['data' => ['token']]);
+        $response->assertStatus(config('http_constants.ok'));
+        $response->assertJsonStructure(['data' => ['token'], 'message', 'status', 'errors']);
+        $response->assertJsonFragment([
+            'message' => 'Access Granted', 
+            'status' => config('http_constants.ok'), 
+            'errors' => []
+        ]);
+        
     }
 
     /**
@@ -42,8 +49,14 @@ class LoginTest extends TestCase
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
         //$response->dd();
-        $response->assertStatus(401);
-        $response->assertJsonFragment(['status' => 401, 'message' => 'Unauthorized']);
+        $response->assertStatus(config('http_constants.unauthorized'));
+        $response->assertJsonStructure(['data', 'message', 'status', 'errors']);
+        $response->assertJsonFragment([
+            'status' => config('http_constants.unauthorized'),
+            'message' => 'Unauthorized',
+            'errors' => ['Unauthorized']]
+        );
+        
     }
 
     /**
@@ -54,7 +67,7 @@ class LoginTest extends TestCase
         $credentials = ['password' => 'password'];
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
         $response->assertJsonFragment(['errors' => ['email' => ['The email field is required.']]]);
     }
@@ -67,7 +80,7 @@ class LoginTest extends TestCase
         $credentials = ['email' => 'asdasdasdasd', 'password' => 'password'];
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
         $response->assertJsonFragment(['errors' => ['email' => ['The email field must be a valid email address.']]]);
     }
@@ -80,7 +93,7 @@ class LoginTest extends TestCase
         $credentials = ['email' => 1, 'password' => 'password'];
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['email']]);
         $response->assertJsonFragment(['errors' => ['email' => [
             'The email field must be a string.',
@@ -97,7 +110,7 @@ class LoginTest extends TestCase
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
         //$response->dd();
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
         $response->assertJsonFragment(['errors' => ['password' => ['The password field is required.']]]);
     }
@@ -110,7 +123,7 @@ class LoginTest extends TestCase
         $credentials = ['email' => 'example@example.com', 'password' => 'asd'];
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
-        $response->assertStatus(422);
+        $response->assertStatus(config('http_constants.unprocessable_entity'));
         $response->assertJsonStructure(['message', 'data', 'status', 'errors' => ['password']]);
         $response->assertJsonFragment(['errors' => ['password' => ['The password field must be at least 8 characters.']]]);
     }

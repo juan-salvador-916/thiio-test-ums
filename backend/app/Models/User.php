@@ -23,7 +23,8 @@ class User extends Authenticatable implements JWTSubject
         'last_name',
         'name',
         'email',
-        'password'
+        'password',
+        'role'
     ];
 
     /**
@@ -57,11 +58,5 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
-    }
-
-    public function sendPasswordResetNotification($token)
-    {
-        $url = 'http://front.app/reset-password?token=' . $token . '&email='.$this->email;
-        $this->notify(new ResetPasswordNotification($url));
     }
 }

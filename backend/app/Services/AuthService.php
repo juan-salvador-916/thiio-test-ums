@@ -15,7 +15,6 @@ class AuthService
         $token = AuthService::attemptAuthentication($credentials);
 
         if (!$token) throwHttpException(config('http_constants.unauthorized'), 'Unauthorized');
-
         return AuthService::respondWithToken($token);
     }
 
@@ -38,6 +37,7 @@ class AuthService
     {
         return createResponseData(
             data: [
+                'user' => formatUserData(AuthService::getAuthenticatedUser()),
                 'token' => $token,
                 'expires_in' => auth()->factory()->getTTL() * 60
             ], 

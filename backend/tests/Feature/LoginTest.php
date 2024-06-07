@@ -30,12 +30,13 @@ class LoginTest extends TestCase
 
         $response = $this->postJson("{$this->apiBase}/login", $credentials);
 
+
         $response->assertStatus(config('http_constants.ok'));
-        $response->assertJsonStructure(['data' => ['token'], 'message', 'status', 'errors']);
+        $response->assertJsonStructure(['data' => ['user','token','expires_in'], 'message', 'status', 'errors']);
         $response->assertJsonFragment([
             'message' => 'Access Granted', 
             'status' => config('http_constants.ok'), 
-            'errors' => []
+            'errors' => [],
         ]);
         
     }
